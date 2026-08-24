@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a12">
+<title>FOOT CARD – Football Card Battle</title>
+<style>
+/* FOOT CARD - Premium Dark Cinematic UI */
+:root {
+  --bg-deep: #0a0a12;
+  --accent: #00e676;
+  --gold: #ffd700;
+  --epic: #9c27b0;
+  --rare: #2196f3;
+  --common: #78909c;
+  --danger: #ff1744;
+  --text: #f0f0f5;
+  --text-dim: #a0a0b0;
+  --card-w: 140px;
+  --card-h: 196px;
+  --radius: 12px;
+  --shadow: 0 8px 32px rgba(0,0,0,0.6);
+  --glow: 0 0 20px rgba(0,230,118,0.3);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+html, body { height: 100%; overflow: hidden; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg-deep); color: var(--text); touch-action: manipulation; }
+.screen { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 16px; background: radial-gradient(ellipse at center, #12122a 0%, #0a0a12 70%); z-index: 10; }
+.screen.active { display: flex; }
+.logo-area { text-align: center; margin-bottom: 40px; }
+.logo-title { font-size: clamp(2.8rem, 10vw, 4.5rem); font-weight: 900; letter-spacing: -2px; background: linear-gradient(135deg, #00e676, #00bcd4, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1.1; }
+.logo-sub { font-size: 0.95rem; color: var(--text-dim); letter-spacing: 4px; text-transform: uppercase; margin-top: 8px; }
+.menu-btns { display: flex; flex-direction: column; gap: 14px; width: min(320px, 90vw); }
+.btn { padding: 16px 24px; border: none; border-radius: 14px; font-size: 1.05rem; font-weight: 700; cursor: pointer; transition: transform 0.15s; }
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: linear-gradient(135deg, #00e676, #00c853); color: #000; box-shadow: 0 6px 24px rgba(0,230,118,0.35); }
+.btn-secondary { background: rgba(255,255,255,0.08); color: var(--text); border: 1px solid rgba(255,255,255,0.12); }
+.btn-gold { background: linear-gradient(135deg, #ffd700, #ffb300); color: #000; }
+.diff-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 12px 0 20px; }
+.diff-btn { padding: 8px 14px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: var(--text-dim); font-size: 0.85rem; cursor: pointer; }
+.diff-btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
+#game-screen { background: linear-gradient(180deg, #0a1a0f 0%, #0d1f12 40%, #0a120e 100%); padding: 0; justify-content: space-between; }
+.hud { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: rgba(0,0,0,0.55); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(255,255,255,0.06); z-index: 20; font-size: 0.9rem; }
+.hud-score { font-size: 1.6rem; font-weight: 900; letter-spacing: 2px; }
+.hud-score span { color: var(--accent); }
+.hud-meta { text-align: center; color: var(--text-dim); font-size: 0.8rem; }
+.hud-meta strong { color: var(--text); }
+.field { flex: 1; width: 100%; position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; perspective: 900px; }
+.field-lines { position: absolute; inset: 8% 5%; border: 2px solid rgba(255,255,255,0.08); border-radius: 8px; pointer-events: none; }
+.field-lines::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.08); }
+.field-circle { position: absolute; top: 50%; left: 50%; width: 90px; height: 90px; border: 2px solid rgba(255,255,255,0.08); border-radius: 50%; transform: translate(-50%, -50%); }
+.opp-zone { display: flex; justify-content: center; gap: 6px; padding: 12px; min-height: 90px; }
+.battle-zone { flex: 1; display: flex; align-items: center; justify-content: center; gap: 24px; position: relative; min-height: 220px; }
+.battle-card-slot { width: var(--card-w); height: var(--card-h); position: relative; }
+.hand-zone { display: flex; justify-content: center; gap: 6px; padding: 12px 8px 20px; overflow-x: auto; overflow-y: visible; min-height: 160px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.hand-zone::-webkit-scrollbar { display: none; }
+.card { width: var(--card-w); height: var(--card-h); border-radius: var(--radius); position: relative; cursor: grab; flex-shrink: 0; transform-style: preserve-3d; transition: transform 0.25s cubic-bezier(0.2,0.8,0.2,1), box-shadow 0.25s; box-shadow: var(--shadow); background: linear-gradient(160deg, #1e1e30 0%, #12121f 100%); border: 2px solid rgba(255,255,255,0.1); overflow: hidden; }
+.card:active { cursor: grabbing; }
+.card.dragging { z-index: 100; transform: scale(1.08) rotate(3deg); box-shadow: 0 20px 50px rgba(0,0,0,0.7), var(--glow); opacity: 0.95; }
+.card.used { opacity: 0.35; pointer-events: none; filter: grayscale(0.7); }
+.card.selected { outline: 3px solid var(--accent); box-shadow: 0 0 24px rgba(0,230,118,0.5); }
+.card-inner { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; }
+.card-rarity-bar { height: 4px; width: 100%; }
+.card.rarity-common .card-rarity-bar { background: var(--common); }
+.card.rarity-rare .card-rarity-bar { background: var(--rare); }
+.card.rarity-epic .card-rarity-bar { background: var(--epic); }
+.card.rarity-legendary .card-rarity-bar { background: linear-gradient(90deg, #ffd700, #ff8f00); }
+.card-img-wrap { height: 58%; background: #111; position: relative; overflow: hidden; }
+.card-img { width: 100%; height: 100%; object-fit: cover; object-position: top center; transition: opacity 0.3s; }
+.card-img.loading { opacity: 0.3; background: linear-gradient(90deg, #1a1a2e, #2a2a40, #1a1a2e); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.card-ovr { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,0.75); color: var(--gold); font-weight: 900; font-size: 1.1rem; padding: 2px 7px; border-radius: 6px; border: 1px solid rgba(255,215,0,0.4); }
+.card-pos { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.75); color: var(--accent); font-weight: 800; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
+.card-info { flex: 1; padding: 6px 8px; display: flex; flex-direction: column; justify-content: space-between; }
+.card-name { font-size: 0.78rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+.card-club { font-size: 0.65rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-stat { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+.card-stat-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; }
+.card-stat-val { font-size: 1.05rem; font-weight: 900; color: var(--accent); }
+.card-back { background: linear-gradient(145deg, #1a3a2a, #0d1f15); border: 2px solid rgba(0,230,118,0.3); display: flex; align-items: center; justify-content: center; }
+.card-back::after { content: 'FOOT'; font-size: 1.4rem; font-weight: 900; color: rgba(0,230,118,0.5); letter-spacing: 2px; }
+@keyframes throwIn { 0% { transform: translateY(80px) scale(0.6) rotate(-12deg); opacity: 0; } 60% { transform: translateY(-15px) scale(1.05) rotate(4deg); opacity: 1; } 100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; } }
+@keyframes throwInOpp { 0% { transform: translateY(-80px) scale(0.6) rotate(12deg); opacity: 0; } 60% { transform: translateY(15px) scale(1.05) rotate(-4deg); opacity: 1; } 100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; } }
+@keyframes flipReveal { 0% { transform: rotateY(90deg); } 100% { transform: rotateY(0); } }
+@keyframes goalPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); filter: brightness(1.3); } }
+.card.throw-player { animation: throwIn 0.55s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+.card.throw-opp { animation: throwInOpp 0.55s cubic-bezier(0.2,0.8,0.2,1) forwards; }
+.card.reveal { animation: flipReveal 0.4s ease-out; }
+.goal-effect { animation: goalPulse 0.6s ease-in-out 2; }
+.result-banner { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: rgba(0,0,0,0.85); padding: 16px 28px; border-radius: 16px; text-align: center; z-index: 50; border: 1px solid rgba(255,255,255,0.1); min-width: 200px; display: none; }
+.result-banner.show { display: block; animation: throwIn 0.4s ease-out; }
+.result-banner .title { font-size: 1.3rem; font-weight: 900; margin-bottom: 6px; }
+.result-banner .title.win { color: var(--accent); }
+.result-banner .title.lose { color: var(--danger); }
+.result-banner .title.draw { color: var(--gold); }
+.result-banner .detail { font-size: 0.85rem; color: var(--text-dim); }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 100; padding: 20px; }
+.modal.show { display: flex; }
+.modal-box { background: #16162a; border-radius: 20px; padding: 28px 24px; max-width: 360px; width: 100%; text-align: center; border: 1px solid rgba(255,255,255,0.08); }
+.modal-box h2 { font-size: 1.6rem; margin-bottom: 12px; }
+.modal-box p { color: var(--text-dim); margin-bottom: 20px; line-height: 1.5; }
+.room-code { font-size: 2rem; font-weight: 900; letter-spacing: 6px; color: var(--accent); background: rgba(0,230,118,0.1); padding: 12px 20px; border-radius: 12px; margin: 16px 0; }
+input.room-input { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: var(--text); font-size: 1.1rem; text-align: center; letter-spacing: 3px; margin-bottom: 16px; }
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(0,0,0,0.9); color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; opacity: 0; transition: all 0.3s; z-index: 200; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (max-width: 480px) {
+  :root { --card-w: 110px; --card-h: 154px; }
+  .card-name { font-size: 0.7rem; }
+  .card-ovr { font-size: 0.95rem; }
+  .hand-zone { gap: 4px; }
+  .battle-zone { gap: 12px; min-height: 180px; }
+}
+@media (min-width: 768px) {
+  :root { --card-w: 150px; --card-h: 210px; }
+  .hand-zone { gap: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div id="menu-screen" class="screen active">
+  <div class="logo-area">
+    <div class="logo-title">FOOT CARD</div>
+    <div class="logo-sub">Football Card Battle</div>
+  </div>
+  <div class="menu-btns">
+    <button class="btn btn-primary" id="btn-vs-bot">▶  العب ضد BOT</button>
+    <button class="btn btn-secondary" id="btn-local">👥  لاعبان محلي</button>
+    <button class="btn btn-gold" id="btn-online">🌐  Online 1v1</button>
+  </div>
+  <p style="margin-top:28px;font-size:0.75rem;color:#666;text-align:center;">200+ لاعب حقيقي • صور Wikipedia • BOT ذكي</p>
+</div>
+
+<div id="diff-screen" class="screen">
+  <h2 style="margin-bottom:8px;">اختر المستوى</h2>
+  <p style="color:var(--text-dim);margin-bottom:16px;font-size:0.9rem;">BOT يتكيف مع صعوبةك</p>
+  <div class="diff-row">
+    <button class="diff-btn" data-diff="easy">Easy</button>
+    <button class="diff-btn active" data-diff="normal">Normal</button>
+    <button class="diff-btn" data-diff="hard">Hard</button>
+    <button class="diff-btn" data-diff="expert">Expert</button>
+  </div>
+  <div class="menu-btns" style="margin-top:20px;">
+    <button class="btn btn-primary" id="btn-start-bot">ابدأ المباراة</button>
+    <button class="btn btn-secondary btn-back">رجوع</button>
+  </div>
+</div>
+
+<div id="online-screen" class="screen">
+  <h2>Online 1v1</h2>
+  <p style="color:var(--text-dim);font-size:0.9rem;margin:8px 0 20px;text-align:center;max-width:300px;">أنشئ غرفة أو انضم بكود. يتطلب خادم WebSocket للتشغيل الحقيقي.</p>
+  <div class="menu-btns">
+    <button class="btn btn-primary" id="btn-create-room">إنشاء غرفة</button>
+    <div id="room-created" style="display:none;">
+      <div class="room-code" id="room-code-display">------</div>
+      <p style="font-size:0.8rem;color:var(--text-dim);">شارك الكود مع صديقك</p>
+    </div>
+    <input type="text" class="room-input" id="room-input" placeholder="أدخل كود الغرفة" maxlength="8">
+    <button class="btn btn-secondary" id="btn-join-room">انضم للغرفة</button>
+    <button class="btn btn-secondary btn-back">رجوع</button>
+  </div>
+</div>
+
+<div id="game-screen" class="screen">
+  <div class="hud">
+    <div>
+      <div id="hud-names" style="font-size:0.75rem;color:var(--text-dim);">You vs BOT</div>
+      <div class="hud-score" id="hud-score"><span>0</span> - <span>0</span></div>
+    </div>
+    <div class="hud-meta" id="hud-meta"><strong>R1/8</strong><br>8 cards left</div>
+  </div>
+  <div class="field">
+    <div class="field-lines"></div>
+    <div class="field-circle"></div>
+    <div class="opp-zone" id="opp-zone"></div>
+    <div class="battle-zone">
+      <div class="battle-card-slot" id="p2-battle-slot"></div>
+      <div class="battle-card-slot" id="p1-battle-slot"></div>
+    </div>
+    <div class="result-banner" id="result-banner">
+      <div class="title">GOAL!</div>
+      <div class="detail">Message</div>
+    </div>
+    <div class="hand-zone"></div>
+  </div>
+</div>
+
+<div class="modal" id="end-modal">
+  <div class="modal-box">
+    <h2 id="end-title">VICTORY!</h2>
+    <p id="end-msg">Final Score: 3 - 1</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn btn-primary" id="btn-rematch">إعادة المباراة</button>
+      <button class="btn btn-secondary" id="btn-menu">القائمة الرئيسية</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===== PLAYERS DB ===== */
+const PLAYERS = [
+  { id:1, name:"Kylian Mbappé", club:"Real Madrid", nation:"France", pos:"ATT", ovr:91, primary:94, rarity:"legendary", wiki:"Kylian_Mbappé" },
+  { id:2, name:"Erling Haaland", club:"Manchester City", nation:"Norway", pos:"ATT", ovr:91, primary:93, rarity:"legendary", wiki:"Erling_Haaland" },
+  { id:3, name:"Rodri", club:"Manchester City", nation:"Spain", pos:"MID", ovr:90, primary:91, rarity:"legendary", wiki:"Rodri_(footballer,_born_1996)" },
+  { id:4, name:"Jude Bellingham", club:"Real Madrid", nation:"England", pos:"MID", ovr:90, primary:90, rarity:"legendary", wiki:"Jude_Bellingham" },
+  { id:5, name:"Vinícius Júnior", club:"Real Madrid", nation:"Brazil", pos:"ATT", ovr:89, primary:92, rarity:"legendary", wiki:"Vinícius_Júnior" },
+  { id:6, name:"Thibaut Courtois", club:"Real Madrid", nation:"Belgium", pos:"GK", ovr:90, primary:92, rarity:"legendary", wiki:"Thibaut_Courtois" },
+  { id:7, name:"Lamine Yamal", club:"FC Barcelona", nation:"Spain", pos:"ATT", ovr:90, primary:91, rarity:"legendary", wiki:"Lamine_Yamal" },
+  { id:8, name:"Pedri", club:"FC Barcelona", nation:"Spain", pos:"MID", ovr:90, primary:90, rarity:"legendary", wiki:"Pedri" },
+  { id:9, name:"Harry Kane", club:"Bayern Munich", nation:"England", pos:"ATT", ovr:90, primary:92, rarity:"legendary", wiki:"Harry_Kane" },
+  { id:10, name:"Lionel Messi", club:"Inter Miami", nation:"Argentina", pos:"ATT", ovr:89, primary:90, rarity:"legendary", wiki:"Lionel_Messi" },
+  { id:11, name:"Mohamed Salah", club:"Liverpool", nation:"Egypt", pos:"ATT", ovr:89, primary:91, rarity:"epic", wiki:"Mohamed_Salah" },
+  { id:12, name:"Virgil van Dijk", club:"Liverpool", nation:"Netherlands", pos:"DEF", ovr:89, primary:91, rarity:"epic", wiki:"Virgil_van_Dijk" },
+  { id:13, name:"Kevin De Bruyne", club:"Manchester City", nation:"Belgium", pos:"MID", ovr:88, primary:91, rarity:"epic", wiki:"Kevin_De_Bruyne" },
+  { id:14, name:"Bruno Fernandes", club:"Manchester United", nation:"Portugal", pos:"MID", ovr:89, primary:90, rarity:"epic", wiki:"Bruno_Fernandes" },
+  { id:15, name:"Ousmane Dembélé", club:"Paris Saint-Germain", nation:"France", pos:"ATT", ovr:90, primary:91, rarity:"legendary", wiki:"Ousmane_Dembélé" },
+  { id:16, name:"Vitinha", club:"Paris Saint-Germain", nation:"Portugal", pos:"MID", ovr:90, primary:89, rarity:"legendary", wiki:"Vitinha" },
+  { id:17, name:"Michael Olise", club:"Bayern Munich", nation:"France", pos:"ATT", ovr:90, primary:90, rarity:"legendary", wiki:"Michael_Olise" },
+  { id:18, name:"Gianluigi Donnarumma", club:"Manchester City", nation:"Italy", pos:"GK", ovr:89, primary:90, rarity:"epic", wiki:"Gianluigi_Donnarumma" },
+  { id:19, name:"Khvicha Kvaratskhelia", club:"PSG", nation:"Georgia", pos:"ATT", ovr:89, primary:90, rarity:"epic", wiki:"Khvicha_Kvaratskhelia" },
+  { id:20, name:"Nuno Mendes", club:"PSG", nation:"Portugal", pos:"DEF", ovr:89, primary:88, rarity:"epic", wiki:"Nuno_Mendes_(footballer,_born_2002)" },
+  { id:21, name:"William Saliba", club:"Arsenal", nation:"France", pos:"DEF", ovr:88, primary:90, rarity:"epic", wiki:"William_Saliba" },
+  { id:22, name:"Declan Rice", club:"Arsenal", nation:"England", pos:"MID", ovr:88, primary:88, rarity:"epic", wiki:"Declan_Rice" },
+  { id:23, name:"Gabriel Magalhães", club:"Arsenal", nation:"Brazil", pos:"DEF", ovr:89, primary:90, rarity:"epic", wiki:"Gabriel_Magalhães" },
+  { id:24, name:"Jan Oblak", club:"Atlético Madrid", nation:"Slovenia", pos:"GK", ovr:88, primary:90, rarity:"epic", wiki:"Jan_Oblak" },
+  { id:25, name:"Achraf Hakimi", club:"PSG", nation:"Morocco", pos:"DEF", ovr:88, primary:87, rarity:"epic", wiki:"Achraf_Hakimi" },
+  { id:26, name:"Joshua Kimmich", club:"Bayern Munich", nation:"Germany", pos:"MID", ovr:88, primary:89, rarity:"epic", wiki:"Joshua_Kimmich" },
+  { id:27, name:"Robert Lewandowski", club:"FC Barcelona", nation:"Poland", pos:"ATT", ovr:88, primary:90, rarity:"epic", wiki:"Robert_Lewandowski" },
+  { id:28, name:"Cristiano Ronaldo", club:"Al Nassr", nation:"Portugal", pos:"ATT", ovr:86, primary:88, rarity:"legendary", wiki:"Cristiano_Ronaldo" },
+  { id:29, name:"Neymar", club:"Al Hilal", nation:"Brazil", pos:"ATT", ovr:85, primary:87, rarity:"epic", wiki:"Neymar" },
+  { id:30, name:"Alisson Becker", club:"Liverpool", nation:"Brazil", pos:"GK", ovr:89, primary:90, rarity:"epic", wiki:"Alisson_Becker" },
+  { id:31, name:"Ederson", club:"Manchester City", nation:"Brazil", pos:"GK", ovr:88, primary:88, rarity:"epic", wiki:"Ederson_(footballer,_born_1993)" },
+  { id:32, name:"Marc-André ter Stegen", club:"FC Barcelona", nation:"Germany", pos:"GK", ovr:88, primary:89, rarity:"epic", wiki:"Marc-André_ter_Stegen" },
+  { id:33, name:"Federico Valverde", club:"Real Madrid", nation:"Uruguay", pos:"MID", ovr:88, primary:88, rarity:"epic", wiki:"Federico_Valverde" },
+  { id:34, name:"Toni Kroos", club:"Retired", nation:"Germany", pos:"MID", ovr:86, primary:90, rarity:"legendary", wiki:"Toni_Kroos" },
+  { id:35, name:"Luka Modrić", club:"Real Madrid", nation:"Croatia", pos:"MID", ovr:85, primary:88, rarity:"legendary", wiki:"Luka_Modrić" },
+  { id:36, name:"Karim Benzema", club:"Al Ittihad", nation:"France", pos:"ATT", ovr:86, primary:88, rarity:"epic", wiki:"Karim_Benzema" },
+  { id:37, name:"Antoine Griezmann", club:"Atlético Madrid", nation:"France", pos:"ATT", ovr:86, primary:87, rarity:"epic", wiki:"Antoine_Griezmann" },
+  { id:38, name:"Phil Foden", club:"Manchester City", nation:"England", pos:"MID", ovr:87, primary:88, rarity:"epic", wiki:"Phil_Foden" },
+  { id:39, name:"Bukayo Saka", club:"Arsenal", nation:"England", pos:"ATT", ovr:87, primary:88, rarity:"epic", wiki:"Bukayo_Saka" },
+  { id:40, name:"Martin Ødegaard", club:"Arsenal", nation:"Norway", pos:"MID", ovr:87, primary:89, rarity:"epic", wiki:"Martin_Ødegaard" },
+  { id:41, name:"Rafael Leão", club:"AC Milan", nation:"Portugal", pos:"ATT", ovr:86, primary:88, rarity:"epic", wiki:"Rafael_Leão" },
+  { id:42, name:"Lautaro Martínez", club:"Inter Milan", nation:"Argentina", pos:"ATT", ovr:87, primary:89, rarity:"epic", wiki:"Lautaro_Martínez" },
+  { id:43, name:"Nicolò Barella", club:"Inter Milan", nation:"Italy", pos:"MID", ovr:86, primary:87, rarity:"epic", wiki:"Nicolò_Barella" },
+  { id:44, name:"Alessandro Bastoni", club:"Inter Milan", nation:"Italy", pos:"DEF", ovr:86, primary:87, rarity:"epic", wiki:"Alessandro_Bastoni" },
+  { id:45, name:"Mike Maignan", club:"AC Milan", nation:"France", pos:"GK", ovr:87, primary:88, rarity:"epic", wiki:"Mike_Maignan" },
+  { id:46, name:"Theo Hernández", club:"AC Milan", nation:"France", pos:"DEF", ovr:86, primary:85, rarity:"epic", wiki:"Theo_Hernández" },
+  { id:47, name:"Jamal Musiala", club:"Bayern Munich", nation:"Germany", pos:"MID", ovr:87, primary:89, rarity:"epic", wiki:"Jamal_Musiala" },
+  { id:48, name:"Florian Wirtz", club:"Bayer Leverkusen", nation:"Germany", pos:"MID", ovr:88, primary:89, rarity:"epic", wiki:"Florian_Wirtz" },
+  { id:49, name:"Xavi Simons", club:"RB Leipzig", nation:"Netherlands", pos:"MID", ovr:84, primary:85, rarity:"rare", wiki:"Xavi_Simons" },
+  { id:50, name:"Alexander Isak", club:"Newcastle", nation:"Sweden", pos:"ATT", ovr:86, primary:87, rarity:"epic", wiki:"Alexander_Isak" },
+  { id:51, name:"Bruno Guimarães", club:"Newcastle", nation:"Brazil", pos:"MID", ovr:85, primary:86, rarity:"rare", wiki:"Bruno_Guimarães" },
+  { id:52, name:"Sven Botman", club:"Newcastle", nation:"Netherlands", pos:"DEF", ovr:84, primary:86, rarity:"rare", wiki:"Sven_Botman" },
+  { id:53, name:"Nick Pope", club:"Newcastle", nation:"England", pos:"GK", ovr:84, primary:85, rarity:"rare", wiki:"Nick_Pope_(footballer)" },
+  { id:54, name:"Cole Palmer", club:"Chelsea", nation:"England", pos:"MID", ovr:86, primary:87, rarity:"epic", wiki:"Cole_Palmer" },
+  { id:55, name:"Enzo Fernández", club:"Chelsea", nation:"Argentina", pos:"MID", ovr:84, primary:85, rarity:"rare", wiki:"Enzo_Fernández" },
+  { id:56, name:"Moises Caicedo", club:"Chelsea", nation:"Ecuador", pos:"MID", ovr:84, primary:85, rarity:"rare", wiki:"Moises_Caicedo" },
+  { id:57, name:"Reece James", club:"Chelsea", nation:"England", pos:"DEF", ovr:84, primary:85, rarity:"rare", wiki:"Reece_James" },
+  { id:58, name:"Robert Sánchez", club:"Chelsea", nation:"Spain", pos:"GK", ovr:82, primary:83, rarity:"rare", wiki:"Robert_Sánchez" },
+  { id:59, name:"Heung-min Son", club:"Tottenham", nation:"South Korea", pos:"ATT", ovr:86, primary:88, rarity:"epic", wiki:"Son_Heung-min" },
+  { id:60, name:"James Maddison", club:"Tottenham", nation:"England", pos:"MID", ovr:84, primary:86, rarity:"rare", wiki:"James_Maddison" },
+  { id:61, name:"Cristian Romero", club:"Tottenham", nation:"Argentina", pos:"DEF", ovr:85, primary:87, rarity:"epic", wiki:"Cristian_Romero_(footballer)" },
+  { id:62, name:"Guglielmo Vicario", club:"Tottenham", nation:"Italy", pos:"GK", ovr:83, primary:84, rarity:"rare", wiki:"Guglielmo_Vicario" },
+  { id:63, name:"Kai Havertz", club:"Arsenal", nation:"Germany", pos:"ATT", ovr:84, primary:85, rarity:"rare", wiki:"Kai_Havertz" },
+  { id:64, name:"Gabriel Martinelli", club:"Arsenal", nation:"Brazil", pos:"ATT", ovr:84, primary:85, rarity:"rare", wiki:"Gabriel_Martinelli" },
+  { id:65, name:"David Raya", club:"Arsenal", nation:"Spain", pos:"GK", ovr:85, primary:86, rarity:"epic", wiki:"David_Raya" },
+  { id:66, name:"Trent Alexander-Arnold", club:"Liverpool", nation:"England", pos:"DEF", ovr:86, primary:85, rarity:"epic", wiki:"Trent_Alexander-Arnold" },
+  { id:67, name:"Andrew Robertson", club:"Liverpool", nation:"Scotland", pos:"DEF", ovr:85, primary:84, rarity:"epic", wiki:"Andrew_Robertson_(footballer)" },
+  { id:68, name:"Luis Díaz", club:"Liverpool", nation:"Colombia", pos:"ATT", ovr:86, primary:87, rarity:"epic", wiki:"Luis_Díaz_(footballer,_born_1997)" },
+  { id:69, name:"Darwin Núñez", club:"Liverpool", nation:"Uruguay", pos:"ATT", ovr:83, primary:84, rarity:"rare", wiki:"Darwin_Núñez" },
+  { id:70, name:"Alexis Mac Allister", club:"Liverpool", nation:"Argentina", pos:"MID", ovr:84, primary:85, rarity:"rare", wiki:"Alexis_Mac_Allister" },
+  { id:71, name:"Dominik Szoboszlai", club:"Liverpool", nation:"Hungary", pos:"MID", ovr:84, primary:85, rarity:"rare", wiki:"Dominik_Szoboszlai" },
+  { id:72, name:"Ibrahima Konaté", club:"Liverpool", nation:"France", pos:"DEF", ovr:84, primary:86, rarity:"rare", wiki:"Ibrahima_Konaté" },
+  { id:73, name:"João Cancelo", club:"Barcelona", nation:"Portugal", pos:"DEF", ovr:84, primary:84, rarity:"rare", wiki:"João_Cancelo" },
+  { id:74, name:"Raphinha", club:"FC Barcelona", nation:"Brazil", pos:"ATT", ovr:86, primary:87, rarity:"epic", wiki:"Raphinha" },
+  { id:75, name:"Frenkie de Jong", club:"FC Barcelona", nation:"Netherlands", pos:"MID", ovr:86, primary:87, rarity:"epic", wiki:"Frenkie_de_Jong" },
+  { id:76, name:"Gavi", club:"FC Barcelona", nation:"Spain", pos:"MID", ovr:84, primary:85, rarity:"rare", wiki:"Gavi_(footballer)" },
+  { id:77, name:"Ronald Araújo", club:"FC Barcelona", nation:"Uruguay", pos:"DEF", ovr:85, primary:87, rarity:"epic", wiki:"Ronald_Araújo" },
+  { id:78, name:"Jules Koundé", club:"FC Barcelona", nation:"France", pos:"DEF", ovr:85, primary:86, rarity:"epic", wiki:"Jules_Koundé" },
+  { id:79, name:"Ilkay Gündogan", club:"FC Barcelona", nation:"Germany", pos:"MID", ovr:84, primary:86, rarity:"rare", wiki:"İlkay_Gündoğan" },
+  { id:80, name:"Andreas Christensen", club:"FC Barcelona", nation:"Denmark", pos:"DEF", ovr:83, primary:84, rarity:"rare", wiki:"Andreas_Christensen" },
+  { id:81, name:"Antonio Rüdiger", club:"Real Madrid", nation:"Germany", pos:"DEF", ovr:86, primary:87, rarity:"epic", wiki:"Antonio_Rüdiger" },
+  { id:82, name:"David Alaba", club:"Real Madrid", nation:"Austria", pos:"DEF", ovr:84, primary:85, rarity:"rare", wiki:"David_Alaba" },
+  { id:83, name:"Éder Militão", club:"Real Madrid", nation:"Brazil", pos:"DEF", ovr:85, primary:86, rarity:"epic", wiki:"Éder_Militão" },
+  { id:84, name:"Aurélien Tchouaméni", club:"Real Madrid", nation:"France", pos:"MID", ovr:85, primary:86, rarity:"epic", wiki:"Aurélien_Tchouaméni" },
+  { id:85, name:"Eduardo Camavinga", club:"Real Madrid", nation:"France", pos:"MID", ovr:84, primary:85, rarity:"rare", wiki:"Eduardo_Camavinga" },
+  { id:86, name:"Rodrygo", club:"Real Madrid", nation:"Brazil", pos:"ATT", ovr:86, primary:87, rarity:"epic", wiki:"Rodrygo" },
+  { id:87, name:"Dani Carvajal", club:"Real Madrid", nation:"Spain", pos:"DEF", ovr:85, primary:84, rarity:"epic", wiki:"Dani_Carvajal" },
+  { id:88, name:"Ferland Mendy", club:"Real Madrid", nation:"France", pos:"DEF", ovr:82, primary:83, rarity:"rare", wiki:"Ferland_Mendy" },
+  { id:89, name:"Andriy Lunin", club:"Real Madrid", nation:"Ukraine", pos:"GK", ovr:82, primary:83, rarity:"rare", wiki:"Andriy_Lunin" },
+  { id:90, name:"Bernardo Silva", club:"Manchester City", nation:"Portugal", pos:"MID", ovr:87, primary:88, rarity:"epic", wiki:"Bernardo_Silva" },
+  { id:91, name:"Ruben Dias", club:"Manchester City", nation:"Portugal", pos:"DEF", ovr:87, primary:89, rarity:"epic", wiki:"Rúben_Dias" },
+  { id:92, name:"John Stones", club:"Manchester City", nation:"England", pos:"DEF", ovr:85, primary:86, rarity:"epic", wiki:"John_Stones" },
+  { id:93, name:"Kyle Walker", club:"Manchester City", nation:"England", pos:"DEF", ovr:84, primary:84, rarity:"rare", wiki:"Kyle_Walker" },
+  { id:94, name:"Jack Grealish", club:"Manchester City", nation:"England", pos:"ATT", ovr:84, primary:85, rarity:"rare", wiki:"Jack_Grealish" },
+  { id:95, name:"Julián Álvarez", club:"Atlético Madrid", nation:"Argentina", pos:"ATT", ovr:85, primary:86, rarity:"epic", wiki:"Julián_Álvarez" },
+  { id:96, name:"Manuel Akanji", club:"Manchester City", nation:"Switzerland", pos:"DEF", ovr:84, primary:85, rarity:"rare", wiki:"Manuel_Akanji" },
+  { id:97, name:"Mateo Kovačić", club:"Manchester City", nation:"Croatia", pos:"MID", ovr:83, primary:84, rarity:"rare", wiki:"Mateo_Kovačić" },
+  { id:98, name:"Jeremy Doku", club:"Manchester City", nation:"Belgium", pos:"ATT", ovr:83, primary:85, rarity:"rare", wiki:"Jérémy_Doku" },
+  { id:99, name:"Victor Osimhen", club:"Galatasaray", nation:"Nigeria", pos:"ATT", ovr:86, primary:88, rarity:"epic", wiki:"Victor_Osimhen" },
+  { id:100, name:"Marcus Rashford", club:"Manchester United", nation:"England", pos:"ATT", ovr:83, primary:84, rarity:"rare", wiki:"Marcus_Rashford" },
+  { id:101, name:"Casemiro", club:"Manchester United", nation:"Brazil", pos:"MID", ovr:84, primary:85, rarity:"rare", wiki:"Casemiro" },
+  { id:102, name:"Lisandro Martínez", club:"Manchester United", nation:"Argentina", pos:"DEF", ovr:84, primary:86, rarity:"rare", wiki:"Lisandro_Martínez" },
+  { id:103, name:"André Onana", club:"Manchester United", nation:"Cameroon", pos:"GK", ovr:84, primary:85, rarity:"rare", wiki:"André_Onana" },
+  { id:104, name:"Kobbie Mainoo", club:"Manchester United", nation:"England", pos:"MID", ovr:81, primary:82, rarity:"rare", wiki:"Kobbie_Mainoo" },
+  { id:105, name:"Alejandro Garnacho", club:"Manchester United", nation:"Argentina", pos:"ATT", ovr:81, primary:82, rarity:"rare", wiki:"Alejandro_Garnacho" },
+  { id:106, name:"Harry Maguire", club:"Manchester United", nation:"England", pos:"DEF", ovr:80, primary:82, rarity:"common", wiki:"Harry_Maguire" },
+  { id:107, name:"Diogo Dalot", club:"Manchester United", nation:"Portugal", pos:"DEF", ovr:82, primary:82, rarity:"rare", wiki:"Diogo_Dalot" },
+  { id:108, name:"Dušan Vlahović", club:"Juventus", nation:"Serbia", pos:"ATT", ovr:84, primary:86, rarity:"rare", wiki:"Dušan_Vlahović" },
+  { id:109, name:"Federico Chiesa", club:"Liverpool", nation:"Italy", pos:"ATT", ovr:83, primary:84, rarity:"rare", wiki:"Federico_Chiesa" },
+  { id:110, name:"Wojciech Szczęsny", club:"FC Barcelona", nation:"Poland", pos:"GK", ovr:85, primary:86, rarity:"epic", wiki:"Wojciech_Szczęsny" },
+  { id:111, name:"Gleison Bremer", club:"Juventus", nation:"Brazil", pos:"DEF", ovr:85, primary:87, rarity:"epic", wiki:"Gleison_Bremer" },
+  { id:112, name:"Manuel Locatelli", club:"Juventus", nation:"Italy", pos:"MID", ovr:83, primary:84, rarity:"rare", wiki:"Manuel_Locatelli" },
+  { id:113, name:"Emiliano Martínez", club:"Aston Villa", nation:"Argentina", pos:"GK", ovr:87, primary:89, rarity:"epic", wiki:"Emiliano_Martínez" },
+  { id:114, name:"Ollie Watkins", club:"Aston Villa", nation:"England", pos:"ATT", ovr:84, primary:85, rarity:"rare", wiki:"Ollie_Watkins" },
+  { id:115, name:"Marquinhos", club:"PSG", nation:"Brazil", pos:"DEF", ovr:86, primary:87, rarity:"epic", wiki:"Marquinhos" },
+  { id:116, name:"Manuel Neuer", club:"Bayern Munich", nation:"Germany", pos:"GK", ovr:86, primary:88, rarity:"epic", wiki:"Manuel_Neuer" },
+  { id:117, name:"Thomas Müller", club:"Bayern Munich", nation:"Germany", pos:"ATT", ovr:82, primary:83, rarity:"rare", wiki:"Thomas_Müller" },
+  { id:118, name:"Leroy Sané", club:"Bayern Munich", nation:"Germany", pos:"ATT", ovr:84, primary:85, rarity:"rare", wiki:"Leroy_Sané" },
+  { id:119, name:"Kingsley Coman", club:"Bayern Munich", nation:"France", pos:"ATT", ovr:84, primary:85, rarity:"rare", wiki:"Kingsley_Coman" },
+  { id:120, name:"Dayot Upamecano", club:"Bayern Munich", nation:"France", pos:"DEF", ovr:84, primary:85, rarity:"rare", wiki:"Dayot_Upamecano" },
+  { id:121, name:"Kim Min-jae", club:"Bayern Munich", nation:"South Korea", pos:"DEF", ovr:85, primary:87, rarity:"epic", wiki:"Kim_Min-jae_(footballer,_born_1996)" },
+  { id:122, name:"Leon Goretzka", club:"Bayern Munich", nation:"Germany", pos:"MID", ovr:84, primary:85, rarity:"rare", wiki:"Leon_Goretzka" },
+  { id:123, name:"João Neves", club:"PSG", nation:"Portugal", pos:"MID", ovr:86, primary:86, rarity:"epic", wiki:"João_Neves_(footballer)" },
+  { id:124, name:"Willian Pacho", club:"PSG", nation:"Ecuador", pos:"DEF", ovr:86, primary:87, rarity:"epic", wiki:"Willian_Pacho" },
+  { id:125, name:"Warren Zaïre-Emery", club:"PSG", nation:"France", pos:"MID", ovr:82, primary:83, rarity:"rare", wiki:"Warren_Zaïre-Emery" },
+  { id:126, name:"Bradley Barcola", club:"PSG", nation:"France", pos:"ATT", ovr:82, primary:83, rarity:"rare", wiki:"Bradley_Barcola" },
+  { id:127, name:"Pelé", club:"Retired", nation:"Brazil", pos:"ATT", ovr:90, primary:93, rarity:"legendary", wiki:"Pelé" },
+  { id:128, name:"Diego Maradona", club:"Retired", nation:"Argentina", pos:"ATT", ovr:88, primary:92, rarity:"legendary", wiki:"Diego_Maradona" },
+  { id:129, name:"Zinedine Zidane", club:"Retired", nation:"France", pos:"MID", ovr:86, primary:90, rarity:"legendary", wiki:"Zinedine_Zidane" },
+  { id:130, name:"Ronaldo Nazário", club:"Retired", nation:"Brazil", pos:"ATT", ovr:86, primary:91, rarity:"legendary", wiki:"Ronaldo_(Brazilian_footballer)" },
+  { id:131, name:"Paolo Maldini", club:"Retired", nation:"Italy", pos:"DEF", ovr:86, primary:90, rarity:"legendary", wiki:"Paolo_Maldini" },
+  { id:132, name:"Johan Cruyff", club:"Retired", nation:"Netherlands", pos:"ATT", ovr:88, primary:91, rarity:"legendary", wiki:"Johan_Cruyff" },
+  { id:133, name:"Ronaldinho", club:"Retired", nation:"Brazil", pos:"ATT", ovr:84, primary:88, rarity:"legendary", wiki:"Ronaldinho" },
+  { id:134, name:"Thierry Henry", club:"Retired", nation:"France", pos:"ATT", ovr:84, primary:88, rarity:"legendary", wiki:"Thierry_Henry" },
+  { id:135, name:"Andrea Pirlo", club:"Retired", nation:"Italy", pos:"MID", ovr:82, primary:88, rarity:"legendary", wiki:"Andrea_Pirlo" },
+  { id:136, name:"Xavi", club:"Retired", nation:"Spain", pos:"MID", ovr:82, primary:87, rarity:"legendary", wiki:"Xavi" },
+  { id:137, name:"Andrés Iniesta", club:"Retired", nation:"Spain", pos:"MID", ovr:82, primary:87, rarity:"legendary", wiki:"Andrés_Iniesta" },
+  { id:138, name:"Gianluigi Buffon", club:"Retired", nation:"Italy", pos:"GK", ovr:80, primary:82, rarity:"legendary", wiki:"Gianluigi_Buffon" },
+  { id:139, name:"Sergio Ramos", club:"Monterrey", nation:"Spain", pos:"DEF", ovr:80, primary:83, rarity:"legendary", wiki:"Sergio_Ramos" },
+  { id:140, name:"Zlatan Ibrahimović", club:"Retired", nation:"Sweden", pos:"ATT", ovr:80, primary:83, rarity:"legendary", wiki:"Zlatan_Ibrahimović" },
+  { id:141, name:"Sadio Mané", club:"Al Nassr", nation:"Senegal", pos:"ATT", ovr:83, primary:84, rarity:"rare", wiki:"Sadio_Mané" },
+  { id:142, name:"Riyad Mahrez", club:"Al Ahli", nation:"Algeria", pos:"ATT", ovr:83, primary:85, rarity:"rare", wiki:"Riyad_Mahrez" },
+  { id:143, name:"N'Golo Kanté", club:"Al Ittihad", nation:"France", pos:"MID", ovr:84, primary:86, rarity:"rare", wiki:"N%27Golo_Kanté" },
+  { id:144, name:"Thiago Silva", club:"Fluminense", nation:"Brazil", pos:"DEF", ovr:82, primary:85, rarity:"rare", wiki:"Thiago_Silva" },
+  { id:145, name:"Luis Suárez", club:"Inter Miami", nation:"Uruguay", pos:"ATT", ovr:82, primary:84, rarity:"rare", wiki:"Luis_Suárez" },
+  { id:146, name:"Sergio Busquets", club:"Inter Miami", nation:"Spain", pos:"MID", ovr:80, primary:82, rarity:"common", wiki:"Sergio_Busquets" },
+  { id:147, name:"Keylor Navas", club:"PSV", nation:"Costa Rica", pos:"GK", ovr:82, primary:84, rarity:"rare", wiki:"Keylor_Navas" },
+  { id:148, name:"Pau Torres", club:"Aston Villa", nation:"Spain", pos:"DEF", ovr:83, primary:84, rarity:"rare", wiki:"Pau_Torres" },
+  { id:149, name:"Youri Tielemans", club:"Aston Villa", nation:"Belgium", pos:"MID", ovr:82, primary:83, rarity:"rare", wiki:"Youri_Tielemans" },
+  { id:150, name:"Amadou Onana", club:"Aston Villa", nation:"Belgium", pos:"MID", ovr:81, primary:82, rarity:"rare", wiki:"Amadou_Onana" },
+];
+
+function getPrimaryLabel(pos) {
+  return { GK:"SAVE", DEF:"DEF", MID:"PLAY", ATT:"ATT" }[pos] || "STAT";
+}
+
+/* ===== IMAGE FETCHER ===== */
+const ImageFetcher = (() => {
+  const cache = new Map();
+  const FALLBACK = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="240"><rect fill="#1a1a2e" width="200" height="240"/><circle cx="100" cy="90" r="40" fill="#2d2d44"/><ellipse cx="100" cy="180" rx="55" ry="40" fill="#2d2d44"/><text x="100" y="225" text-anchor="middle" fill="#666" font-size="12">FOOT CARD</text></svg>');
+  async function fetch(wikiTitle) {
+    if (!wikiTitle) return FALLBACK;
+    if (cache.has(wikiTitle)) return cache.get(wikiTitle);
+    try {
+      const url = `https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(wikiTitle)}&prop=pageimages&format=json&pithumbsize=300&origin=*`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("API");
+      const data = await res.json();
+      const page = Object.values(data.query?.pages || {})[0];
+      if (page?.thumbnail?.source) {
+        cache.set(wikiTitle, page.thumbnail.source);
+        return page.thumbnail.source;
+      }
+    } catch(e) {}
+    cache.set(wikiTitle, FALLBACK);
+    return FALLBACK;
+  }
+  function preload(players, limit=16) {
+    players.slice(0, limit).forEach(p => { if (p.wiki) fetch(p.wiki); });
+  }
+  return { fetch, FALLBACK, preload };
+})();
+
+/* ===== BOT ===== */
+const BotAI = (() => {
+  let difficulty = "normal";
+  const SETTINGS = {
+    easy:   { mistake: 0.45, saveStrong: false },
+    normal: { mistake: 0.22, saveStrong: true },
+    hard:   { mistake: 0.08, saveStrong: true },
+    expert: { mistake: 0.02, saveStrong: true }
+  };
+  function setDifficulty(d) { difficulty = SETTINGS[d] ? d : "normal"; }
+  function chooseCard(myHand, context={}) {
+    if (!myHand?.length) return null;
+    const s = SETTINGS[difficulty];
+    if (Math.random() < s.mistake) return myHand[Math.floor(Math.random()*myHand.length)];
+    const scored = myHand.map(c => {
+      let sc = c.primary * 1.2 + c.ovr * 0.3;
+      if (context.lastPlayerPos === "ATT" && (c.pos==="DEF"||c.pos==="GK")) sc += 15;
+      if (c.pos === "MID") sc += 4;
+      if (s.saveStrong && myHand.length > 3 && c.ovr >= 88) sc -= 12;
+      return { card:c, score:sc };
+    });
+    scored.sort((a,b) => b.score - a.score);
+    return scored[0].card;
+  }
+  return { setDifficulty, chooseCard };
+})();
+
+/* ===== GAME ENGINE ===== */
+const Game = (() => {
+  const MAX_ROUNDS = 8, HAND_SIZE = 8;
+  let state = {};
+  function getModifiers(a, b) {
+    let m = 0;
+    if (a.nation === b.nation) m += 2;
+    const r = { common:0, rare:1, epic:2, legendary:3 };
+    m += (r[a.rarity]||0) - (r[b.rarity]||0);
+    m += Math.floor(Math.random()*7) - 3;
+    return m;
+  }
+  function resolveBattle(cardA, cardB) {
+    let powerA = cardA.primary, powerB = cardB.primary;
+    const posA = cardA.pos, posB = cardB.pos;
+    if (posA==="ATT" && posB==="GK") {
+      const shot = powerA + getModifiers(cardA, cardB);
+      const save = powerB + getModifiers(cardB, cardA);
+      const chance = Math.min(0.85, Math.max(0.15, (shot - save + 50)/100));
+      const scored = Math.random() < chance;
+      return { winner: scored?"p1":"p2", type: scored?"goal":"save", message: scored?`${cardA.name} SCORES!`:`${cardB.name} SAVES!` };
+    }
+    if (posA==="GK" && posB==="ATT") {
+      const save = powerA + getModifiers(cardA, cardB);
+      const shot = powerB + getModifiers(cardB, cardA);
+      const chance = Math.min(0.85, Math.max(0.15, (shot - save + 50)/100));
+      const scored = Math.random() < chance;
+      return { winner: scored?"p2":"p1", type: scored?"goal":"save", message: scored?`${cardB.name} SCORES!`:`${cardA.name} SAVES!` };
+    }
+    if (posA==="ATT" && posB==="DEF") { powerA += getModifiers(cardA,cardB); powerB += getModifiers(cardB,cardA)+2; }
+    else if (posA==="MID" && posB==="MID") { powerA += getModifiers(cardA,cardB)+3; powerB += getModifiers(cardB,cardA)+3; }
+    else if (posA==="MID" && posB==="DEF") { powerA += getModifiers(cardA,cardB); powerB += getModifiers(cardB,cardA)+4; }
+    else if (posA==="DEF" && posB==="ATT") { powerA += getModifiers(cardA,cardB)+3; powerB += getModifiers(cardB,cardA); }
+    else { powerA += getModifiers(cardA,cardB); powerB += getModifiers(cardB,cardA); }
+    if (powerA > powerB + 2) {
+      const isGoal = posA==="ATT" || (posA==="MID" && posB!=="GK");
+      return { winner:"p1", type: isGoal?"goal":"stop", message: isGoal?`${cardA.name} breaks through! GOAL!`:`${cardA.name} wins the duel!` };
+    }
+    if (powerB > powerA + 2) {
+      const isGoal = posB==="ATT" || (posB==="MID" && posA!=="GK");
+      return { winner:"p2", type: isGoal?"goal":"stop", message: isGoal?`${cardB.name} breaks through! GOAL!`:`${cardB.name} wins the duel!` };
+    }
+    return { winner:"draw", type:"draw", message:"Evenly matched! No goal." };
+  }
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i=a.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+  function startMatch(mode, difficulty="normal", p1="You", p2="BOT") {
+    const pool = shuffle(PLAYERS);
+    state = {
+      mode, difficulty,
+      player1: { name:p1, score:0, hand: pool.slice(0,HAND_SIZE).map(p=>({...p})), used:[] },
+      player2: { name:p2, score:0, hand: pool.slice(HAND_SIZE,HAND_SIZE*2).map(p=>({...p})), used:[] },
+      round:1, turn:1, phase:"select",
+      battle: { p1Card:null, p2Card:null }, history:[], lastResult:null, isPenalty:false
+    };
+    BotAI.setDifficulty(difficulty);
+    return state;
+  }
+  function playCard(num, cardId) {
+    const player = num===1 ? state.player1 : state.player2;
+    const idx = player.hand.findIndex(c => c.id===cardId);
+    if (idx===-1) return false;
+    const card = player.hand.splice(idx,1)[0];
+    player.used.push(card);
+    if (num===1) state.battle.p1Card = card; else state.battle.p2Card = card;
+    return true;
+  }
+  function botPlay() {
+    if (state.mode !== "bot") return null;
+    const card = BotAI.chooseCard(state.player2.hand, { lastPlayerPos: state.battle.p1Card?.pos });
+    if (card) { playCard(2, card.id); return card; }
+    return null;
+  }
+  function resolveRound() {
+    if (!state.battle.p1Card || !state.battle.p2Card) return null;
+    const result = resolveBattle(state.battle.p1Card, state.battle.p2Card);
+    state.lastResult = result;
+    if (result.type==="goal") {
+      if (result.winner==="p1") state.player1.score++;
+      else if (result.winner==="p2") state.player2.score++;
+    }
+    state.history.push({ round:state.round, result });
+    return result;
+  }
+  function nextRound() {
+    state.round++;
+    state.battle = { p1Card:null, p2Card:null };
+    state.phase = "select";
+    state.lastResult = null;
+    state.turn = 1;
+    if (state.round > MAX_ROUNDS) return finishMatch();
+    return null;
+  }
+  function finishMatch() {
+    if (state.player1.score > state.player2.score) return { status:"finished", winner:"p1" };
+    if (state.player2.score > state.player1.score) return { status:"finished", winner:"p2" };
+    state.isPenalty = true;
+    return { status:"penalty" };
+  }
+  function resolvePenalty() {
+    const p1 = state.player1.hand[0] || state.player1.used.at(-1);
+    const p2 = state.player2.hand[0] || state.player2.used.at(-1);
+    if (!p1||!p2) return { status:"finished", winner:"draw" };
+    return { status:"finished", winner: p1.primary >= p2.primary ? "p1" : "p2", penalty:true };
+  }
+  function getState() { return state; }
+  return { startMatch, playCard, botPlay, resolveRound, nextRound, finishMatch, resolvePenalty, getState, MAX_ROUNDS, HAND_SIZE };
+})();
+
+/* ===== UI ===== */
+const UI = (() => {
+  let isAnimating = false, audioCtx = null;
+  function initAudio() { if (!audioCtx) try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} }
+  function playTone(f,d,t="sine",v=0.15) {
+    if (!audioCtx) return;
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=t; o.frequency.value=f; g.gain.setValueAtTime(v,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+d);
+    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d);
+  }
+  function sfx(n) {
+    initAudio();
+    if (n==="pick") playTone(420,0.08,"triangle",0.1);
+    else if (n==="throw") { playTone(180,0.12,"sawtooth",0.12); setTimeout(()=>playTone(90,0.15,"sine",0.08),80); }
+    else if (n==="reveal") { playTone(600,0.1,"square",0.08); playTone(900,0.15,"sine",0.06); }
+    else if (n==="goal") { playTone(523,0.15); setTimeout(()=>playTone(659,0.15),120); setTimeout(()=>playTone(784,0.25),240); }
+    else if (n==="win") [523,659,784,1046].forEach((f,i)=>setTimeout(()=>playTone(f,0.2),i*100));
+    else if (n==="lose") playTone(200,0.4,"sawtooth",0.12);
+    else if (n==="click") playTone(800,0.05,"sine",0.08);
+  }
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  function showScreen(id) { $$(".screen").forEach(s=>s.classList.remove("active")); $(`#${id}`)?.classList.add("active"); }
+  function toast(msg, ms=2200) {
+    let t = $(".toast");
+    if (!t) { t=document.createElement("div"); t.className="toast"; document.body.appendChild(t); }
+    t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),ms);
+  }
+  function wait(ms) { return new Promise(r=>setTimeout(r,ms)); }
+  function createCardElement(player, opts={}) {
+    const { faceDown=false, interactive=false } = opts;
+    const div = document.createElement("div");
+    div.className = `card rarity-${player.rarity||"common"}`;
+    div.dataset.id = player.id;
+    if (faceDown) { div.classList.add("card-back"); return div; }
+    div.innerHTML = `<div class="card-inner"><div class="card-rarity-bar"></div>
+      <div class="card-img-wrap"><img class="card-img loading" alt="${player.name}" src="${ImageFetcher.FALLBACK}">
+      <span class="card-ovr">${player.ovr}</span><span class="card-pos">${player.pos}</span></div>
+      <div class="card-info"><div><div class="card-name">${player.name}</div><div class="card-club">${player.club}</div></div>
+      <div class="card-stat"><span class="card-stat-label">${getPrimaryLabel(player.pos)}</span><span class="card-stat-val">${player.primary}</span></div></div></div>`;
+    const img = div.querySelector(".card-img");
+    if (player.wiki) ImageFetcher.fetch(player.wiki).then(url => { img.src=url; img.classList.remove("loading"); });
+    else img.classList.remove("loading");
+    if (interactive) setupCardDrag(div, player);
+    return div;
+  }
+  function setupCardDrag(el, player) {
+    let startY, dragging=false;
+    const onStart = e => {
+      if (isAnimating || Game.getState().phase!=="select") return;
+      const t = e.touches?e.touches[0]:e;
+      startY = t.clientY; dragging=true; el.classList.add("dragging"); sfx("pick"); e.preventDefault();
+    };
+    const onMove = e => {
+      if (!dragging) return;
+      const t = e.touches?e.touches[0]:e;
+      const dy = t.clientY - startY;
+      el.style.transform = `translateY(${dy}px) scale(1.08) rotate(${dy*0.02}deg)`;
+    };
+    const onEnd = e => {
+      if (!dragging) return;
+      dragging=false; el.classList.remove("dragging"); el.style.transform="";
+      const t = e.changedTouches?e.changedTouches[0]:e;
+      if (t.clientY - startY < -60) throwCard(player);
+      else { $$(".hand-zone .card").forEach(c=>c.classList.remove("selected")); el.classList.add("selected"); }
+    };
+    el.addEventListener("mousedown", onStart);
+    el.addEventListener("touchstart", onStart, {passive:false});
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onMove, {passive:false});
+    window.addEventListener("mouseup", onEnd);
+    window.addEventListener("touchend", onEnd);
+  }
+  async function throwCard(player) {
+    if (isAnimating) return;
+    const state = Game.getState();
+    if (state.phase !== "select") return;
+    isAnimating = true; sfx("throw");
+    if (!Game.playCard(1, player.id)) { isAnimating=false; return; }
+    renderHand();
+    const slot = $("#p1-battle-slot");
+    slot.innerHTML = "";
+    const cardEl = createCardElement(player);
+    cardEl.classList.add("throw-player");
+    slot.appendChild(cardEl);
+    await wait(550);
+    if (state.mode === "bot") {
+      const botCard = Game.botPlay();
+      if (botCard) {
+        sfx("throw");
+        const opp = $("#p2-battle-slot");
+        opp.innerHTML = "";
+        const back = createCardElement(botCard, {faceDown:true});
+        back.classList.add("throw-opp");
+        opp.appendChild(back);
+        await wait(500);
+        sfx("reveal");
+        opp.innerHTML = "";
+        const rev = createCardElement(botCard);
+        rev.classList.add("reveal");
+        opp.appendChild(rev);
+        await wait(450);
+      }
+    }
+    await finishRound();
+  }
+  async function finishRound() {
+    const result = Game.resolveRound();
+    showResult(result); updateHUD();
+    if (result?.type==="goal") {
+      sfx("goal");
+      $(".battle-zone")?.classList.add("goal-effect");
+      setTimeout(()=>$(".battle-zone")?.classList.remove("goal-effect"),1200);
+    }
+    await wait(2000); hideResult();
+    const fin = Game.nextRound();
+    if (fin) {
+      if (fin.status==="penalty") {
+        toast("تعادل! ركلات ترجيح...");
+        await wait(1400);
+        endMatch(Game.resolvePenalty());
+      } else endMatch(fin);
+    } else {
+      isAnimating=false; renderHand(); clearBattle(); updateHUD();
+      toast("الجولة التالية — ارمي كارت!");
+    }
+  }
+  function renderHand() {
+    const zone = $(".hand-zone");
+    if (!zone) return;
+    zone.innerHTML = "";
+    const s = Game.getState();
+    s.player1.hand.forEach(p => zone.appendChild(createCardElement(p, {interactive:true})));
+    const opp = $("#opp-zone");
+    if (opp) {
+      opp.innerHTML = "";
+      for (let i=0;i<Math.min(s.player2.hand.length,8);i++) {
+        const b = document.createElement("div");
+        b.className="card card-back"; b.style.cssText="width:48px;height:68px;opacity:0.7";
+        opp.appendChild(b);
+      }
+    }
+  }
+  function clearBattle() { $("#p1-battle-slot").innerHTML=""; $("#p2-battle-slot").innerHTML=""; }
+  function updateHUD() {
+    const s = Game.getState();
+    $("#hud-score").innerHTML = `<span>${s.player1.score}</span> - <span>${s.player2.score}</span>`;
+    $("#hud-meta").innerHTML = `<strong>R${s.round}/${Game.MAX_ROUNDS}</strong><br>${s.player1.hand.length} cards left`;
+    $("#hud-names").textContent = `${s.player1.name} vs ${s.player2.name}`;
+  }
+  function showResult(r) {
+    if (!r) return;
+    const b = $("#result-banner"), t=b.querySelector(".title"), d=b.querySelector(".detail");
+    t.className="title";
+    if (r.winner==="p1") t.classList.add("win"); else if (r.winner==="p2") t.classList.add("lose"); else t.classList.add("draw");
+    t.textContent = r.type==="goal"?"GOAL!": r.type==="save"?"SAVE!": r.winner==="draw"?"DRAW":"DUEL";
+    d.textContent = r.message||"";
+    b.classList.add("show");
+  }
+  function hideResult() { $("#result-banner")?.classList.remove("show"); }
+  function endMatch(result) {
+    isAnimating=false;
+    const title=$("#end-title"), msg=$("#end-msg");
+    if (result.winner==="p1") { title.textContent="VICTORY!"; title.style.color="var(--accent)"; sfx("win"); }
+    else if (result.winner==="p2") { title.textContent="DEFEAT"; title.style.color="var(--danger)"; sfx("lose"); }
+    else { title.textContent="DRAW"; title.style.color="var(--gold)"; }
+    const s=Game.getState();
+    msg.textContent = `النتيجة النهائية: ${s.player1.score} - ${s.player2.score}${result.penalty?" (ركلات ترجيح)":""}`;
+    $("#end-modal").classList.add("show");
+  }
+  function startGame(mode, difficulty) {
+    initAudio();
+    const names = mode==="bot"?["You","BOT"]:["Player 1","Player 2"];
+    Game.startMatch(mode, difficulty, names[0], names[1]);
+    showScreen("game-screen"); clearBattle(); renderHand(); updateHUD(); isAnimating=false;
+    ImageFetcher.preload([...Game.getState().player1.hand, ...Game.getState().player2.hand], 16);
+  }
+  function init() {
+    $("#btn-vs-bot")?.addEventListener("click", ()=>{ sfx("click"); showScreen("diff-screen"); });
+    $("#btn-local")?.addEventListener("click", ()=>{ sfx("click"); startGame("local","normal"); toast("Local: Player 1 يبدأ — ارمي كارت!"); });
+    $("#btn-online")?.addEventListener("click", ()=>{ sfx("click"); showScreen("online-screen"); });
+    $$(".diff-btn").forEach(btn => btn.addEventListener("click", ()=>{ $$(".diff-btn").forEach(b=>b.classList.remove("active")); btn.classList.add("active"); sfx("click"); }));
+    $("#btn-start-bot")?.addEventListener("click", ()=>{ sfx("click"); const d=$(".diff-btn.active")?.dataset.diff||"normal"; startGame("bot",d); });
+    $("#btn-create-room")?.addEventListener("click", ()=>{ sfx("click"); const code=Math.random().toString(36).substring(2,8).toUpperCase(); $("#room-code-display").textContent=code; $("#room-created").style.display="block"; toast("غرفة جاهزة (يحتاج Backend)"); });
+    $("#btn-join-room")?.addEventListener("click", ()=>{ sfx("click"); toast("يتطلب WebSocket Backend"); });
+    $("#btn-rematch")?.addEventListener("click", ()=>{ sfx("click"); $("#end-modal").classList.remove("show"); const s=Game.getState(); startGame(s.mode,s.difficulty); });
+    $("#btn-menu")?.addEventListener("click", ()=>{ sfx("click"); $("#end-modal").classList.remove("show"); showScreen("menu-screen"); });
+    $$(".btn-back").forEach(b => b.addEventListener("click", ()=>{ sfx("click"); showScreen("menu-screen"); }));
+    showScreen("menu-screen");
+  }
+  return { init };
+})();
+
+document.addEventListener("DOMContentLoaded", () => UI.init());
+</script>
+</body>
+</html>
